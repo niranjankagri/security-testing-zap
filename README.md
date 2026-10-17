@@ -33,6 +33,8 @@ ZAP caught all seven defects it can see, and none of the three access-control de
 belongs to bob. That is the point of the API tests next to it. The CI run page shows this table with live results
 (`scripts/verify.ts` writes it into the job summary).
 
+![The verdict of a CI run: hardened build clean, every planted defect caught](docs/images/zap-verdict.png)
+
 ## What the scan found in the build I thought was done
 
 - **Anti-CSRF Tokens Check:** after a failed token check, the error page showed the login form again with an empty
