@@ -129,8 +129,10 @@ export function createApp(build: Build, store = new Store()): Server {
     if (route === 'POST /login') {
       const form = new URLSearchParams(await readBody(request));
       if (!session || !sid || form.get('csrf_token') !== session.csrfToken) {
-        // No form on this page: a form here would have no valid token. The link starts a fresh one.
-        return send(response, 403, html, expiredPage());
+        // 400, not 403: the request is invalid, not forbidden. With 403, ZAP's "Bypassing 403" rule took /login for a
+        // protected path and reported the public GET /login as a bypass. No form on this page: a form here would have
+        // no valid token. The link starts a fresh one.
+        return send(response, 400, html, expiredPage());
       }
       const name = form.get('name') ?? '';
       if (!has('no-login-rate-limit') && store.isLocked(name)) {

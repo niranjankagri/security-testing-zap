@@ -66,7 +66,21 @@ describe('hardened build: the security behaviour users rely on', () => {
   it('rejects a login without the form token (cross-site request forgery)', async () => {
     const client = new Client(await start('hardened'));
     await client.loginForm();
-    assert.equal(await client.login('alice', DEMO_PASSWORD, 'forged-token'), 403);
+    assert.equal(await client.login('alice', DEMO_PASSWORD, 'forged-token'), 400);
+  });
+
+  it('shows no form on the expired-token page (a form there could never carry a valid token)', async () => {
+    const client = new Client(await start('hardened'));
+    await client.loginForm();
+    const response = await client.request('/login', {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ csrf_token: 'forged-token', name: 'alice', password: DEMO_PASSWORD }),
+    });
+    assert.equal(response.status, 400);
+    const page = await response.text();
+    assert.doesNotMatch(page, /<form/);
+    assert.match(page, /<a href="\/login">/);
   });
 
   it('issues a new session id at sign-in (session fixation)', async () => {
