@@ -1,0 +1,5 @@
+node_modules/
+reports/
+package-lock.json
+# ZAP's rule file is tab-separated and read by ZAP itself.
+zap/rules.tsv

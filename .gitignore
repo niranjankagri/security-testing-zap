@@ -1,0 +1,9 @@
+# Dependencies
+node_modules/
+
+# ZAP reports of local scans (CI keeps them as artifacts)
+reports/
+
+# IDE settings
+.idea/
+.vscode/

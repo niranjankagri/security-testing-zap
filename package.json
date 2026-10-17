@@ -1,0 +1,33 @@
+{
+  "name": "security-testing-zap",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Security testing with OWASP ZAP (baseline and full scans in Docker) plus API tests for access control, on an app with a hardened and a deliberately vulnerable build",
+  "author": "Niranjan Kumar Agri",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=24.2"
+  },
+  "scripts": {
+    "app": "node app/server.ts --port 4320",
+    "test": "node --test tests/*.test.ts",
+    "scan": "node scripts/scan.ts",
+    "scan:full": "node scripts/scan.ts --full",
+    "verify": "node scripts/verify.ts",
+    "typecheck": "tsc -p tsconfig.json",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run typecheck && npm run lint && npm run format:check"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "26.6.5",
+    "eslint": "10.12.0",
+    "eslint-config-prettier": "10.1.8",
+    "prettier": "3.9.9",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.1"
+  }
+}
