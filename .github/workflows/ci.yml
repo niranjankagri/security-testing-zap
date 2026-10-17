@@ -1,0 +1,73 @@
+# Continuous integration: static checks and the API security tests first, then ZAP baseline and full scans of
+# both builds in parallel, then one job that judges all four reports together.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# A newer push to the same branch cancels the run that is still going.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Typecheck, lint, format, API security tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm test
+
+  scan:
+    name: ZAP scans (${{ matrix.build }} build)
+    needs: checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        build: [hardened, vulnerable]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      # The app and ZAP run in containers on a private Docker network (scripts/scan.ts); no npm packages needed.
+      - name: Baseline and full scan
+        run: node scripts/scan.ts --full --build ${{ matrix.build }}
+      - uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: zap-${{ matrix.build }}
+          path: reports/zap/${{ matrix.build }}-*
+          retention-days: 14
+
+  verify:
+    name: Judge the reports
+    needs: scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - uses: actions/download-artifact@v7
+        with:
+          pattern: zap-*
+          path: reports/zap
+          merge-multiple: true
+      # Hardened: only IGNORE alerts allowed. Vulnerable: every planted defect reported. Summary on the run page.
+      - run: node scripts/verify.ts --full
