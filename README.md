@@ -74,7 +74,7 @@ npm test
 Needs Node 24.2 or later and Docker Desktop.
 
 ```
-cd /d D:\Data\Work\security-testing-zap
+cd /d D:\Data\Work\portfolio-projects\security-testing-zap
 npm ci
 
 npm test                 API security tests and unit tests (seconds, no Docker)
