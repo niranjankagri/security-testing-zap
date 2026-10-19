@@ -45,6 +45,10 @@ function securityHeaders(has: Has): Record<string, string> {
   return headers;
 }
 
+/**
+ * The Set-Cookie value of the session: Secure always, HttpOnly and SameSite=Strict unless the build plants those
+ * defects.
+ */
 function sessionCookie(id: string, has: Has): string {
   const parts = [`sid=${id}`, 'Path=/', 'Secure'];
   if (!has('cookie-not-httponly')) parts.push('HttpOnly');
@@ -52,6 +56,7 @@ function sessionCookie(id: string, has: Has): string {
   return parts.join('; ');
 }
 
+/** The value of one cookie from the request's Cookie header, or undefined. */
 function cookieValue(request: IncomingMessage, name: string): string | undefined {
   for (const part of (request.headers.cookie ?? '').split(';')) {
     const [key, ...value] = part.trim().split('=');
@@ -60,6 +65,7 @@ function cookieValue(request: IncomingMessage, name: string): string | undefined
   return undefined;
 }
 
+/** Reads the request body as text, refusing anything over 10,000 characters. */
 async function readBody(request: IncomingMessage): Promise<string> {
   let body = '';
   for await (const chunk of request) {
@@ -72,6 +78,10 @@ async function readBody(request: IncomingMessage): Promise<string> {
 /** The fields a client may change on a note. Everything else in the request body is ignored. */
 const EDITABLE: readonly (keyof Note)[] = ['title', 'text'];
 
+/**
+ * Creates the server for one build: "hardened" has no defects, "vulnerable" switches on every defect from defects.ts.
+ * Unexpected errors are logged and answered with a generic 500 that reveals nothing.
+ */
 export function createApp(build: Build, store = new Store()): Server {
   const defects = defectsOf(build);
   const has: Has = (id) => defects.has(id);
@@ -85,15 +95,21 @@ export function createApp(build: Build, store = new Store()): Server {
     });
   });
 
+  /** Writes a response with the build's security headers, the content type and any extra headers. */
   function send(response: ServerResponse, status: number, type: string, body: string, extra = {}): void {
     response.writeHead(status, { ...baseHeaders, 'content-type': type, ...extra });
     response.end(body);
   }
 
+  /** Writes a JSON response. */
   function json(response: ServerResponse, status: number, value: unknown): void {
     send(response, status, 'application/json; charset=utf-8', JSON.stringify(value));
   }
 
+  /**
+   * All routes: pages, sign-in and sign-out (with the anti-CSRF check and the login rate limit), search, and the
+   * notes API, where each user only reaches their own notes unless the build plants the access-control defect.
+   */
   async function handle(request: IncomingMessage, response: ServerResponse): Promise<void> {
     const url = new URL(request.url ?? '/', 'http://localhost');
     // Only canonical paths: "/%2e/login" or "//login" would be treated as "/login" by the URL parser, the classic

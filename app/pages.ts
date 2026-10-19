@@ -14,6 +14,10 @@ export function escapeHtml(value: string): string {
     .replaceAll("'", '&#39;');
 }
 
+/**
+ * The page frame every page shares: head with the stylesheet, header with the navigation, and the page's body. The
+ * title is escaped; body is HTML that the caller built and escaped.
+ */
 export function layout(title: string, body: string): string {
   return `<!doctype html>
 <html lang="en">
@@ -33,6 +37,7 @@ ${body}
 `;
 }
 
+/** The start page with the public search form. */
 export function homePage(): string {
   return layout(
     'Home',
@@ -46,6 +51,7 @@ export function homePage(): string {
   );
 }
 
+/** The sign-in form with the session's anti-CSRF token in a hidden field, and an optional error message (escaped). */
 export function loginPage(csrfToken: string, message = ''): string {
   return layout(
     'Sign in',
@@ -75,6 +81,9 @@ ${items || '        <li>No tips found.</li>'}
   );
 }
 
+/**
+ * The signed-in user's notes, every value escaped, and the sign-out form (POST, so a link cannot sign anyone out).
+ */
 export function notesPage(name: string, notes: Note[]): string {
   const items = notes.map((n) => `        <li><strong>${escapeHtml(n.title)}</strong>: ${escapeHtml(n.text)}</li>`);
   return layout(
@@ -87,6 +96,10 @@ ${items.join('\n')}
   );
 }
 
+/**
+ * Shown when the anti-CSRF token is missing or wrong: a link back to the form, not a form, so the error page itself
+ * has nothing to attack.
+ */
 export function expiredPage(): string {
   return layout(
     'Sign in',

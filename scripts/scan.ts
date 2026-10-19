@@ -32,10 +32,15 @@ function docker(args: string[], quiet = false): number {
   return result.status ?? 1;
 }
 
+/** The Docker container name of one build. */
 function containerName(build: Build): string {
   return `notevault-${build}`;
 }
 
+/**
+ * Starts both builds in containers on the private network (repo mounted read-only), then waits up to 30 seconds until
+ * each answers.
+ */
 function startApps(): void {
   docker(['network', 'create', NETWORK], true); // fails harmlessly if it already exists
   for (const { build, port } of BUILDS) {
@@ -77,6 +82,7 @@ function startApps(): void {
   }
 }
 
+/** Removes both app containers and the network; errors are ignored. */
 function stopApps(): void {
   for (const { build } of BUILDS) docker(['rm', '-f', containerName(build)], true);
   docker(['network', 'rm', NETWORK], true);

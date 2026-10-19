@@ -11,6 +11,10 @@ export class Client {
     this.base = base;
   }
 
+  /**
+   * One request with the session cookie; a Set-Cookie in the answer replaces it. Redirects are not followed, so tests
+   * can check the 303 itself.
+   */
   async request(path: string, init: RequestInit = {}): Promise<Response> {
     const headers = new Headers(init.headers);
     if (this.sid) headers.set('cookie', `sid=${this.sid}`);
@@ -41,10 +45,12 @@ export class Client {
     return response.status;
   }
 
+  /** The current session id, for tests about the cookie. */
   get sessionId(): string {
     return this.sid;
   }
 
+  /** A request whose answer is JSON (or empty): the status and the parsed body. */
   async json(path: string, init: RequestInit = {}): Promise<{ status: number; body: unknown }> {
     const response = await this.request(path, init);
     const text = await response.text();

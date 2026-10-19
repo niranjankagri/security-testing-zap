@@ -18,6 +18,7 @@ import { describeAlert, parseReport, parseRules, unexpected, type Alert } from '
 const DIR = join('reports', 'zap');
 const rules = parseRules(readFileSync(join('zap', 'rules.tsv'), 'utf8'));
 
+/** The alerts of one ZAP report, or undefined when that scan did not run. */
 function report(name: string): Alert[] | undefined {
   const file = join(DIR, `${name}.json`);
   return existsSync(file) ? parseReport(readFileSync(file, 'utf8')) : undefined;

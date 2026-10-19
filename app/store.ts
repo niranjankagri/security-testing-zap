@@ -30,15 +30,18 @@ export const DEMO_PASSWORD = 'NoteVault-demo-1';
 export const LOGIN_LIMIT = 5;
 export const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 
+/** scrypt with a per-user salt: slow on purpose, so a stolen hash is expensive to crack. */
 function hashPassword(password: string, salt: Buffer): Buffer {
   return scryptSync(password, salt, 32);
 }
 
+/** A demo user with the demo password, hashed with a fresh salt. */
 function makeUser(id: number, name: string): User {
   const salt = randomBytes(16);
   return { id, name, salt, hash: hashPassword(DEMO_PASSWORD, salt) };
 }
 
+/** In-memory data of one app instance: the two demo users, their notes, the sessions and the failed-login counts. */
 export class Store {
   readonly users: User[] = [makeUser(1, 'alice'), makeUser(2, 'bob')];
   readonly notes: Note[] = [
@@ -56,6 +59,9 @@ export class Store {
     return timingSafeEqual(hashPassword(password, user.salt), user.hash) ? user : undefined;
   }
 
+  /**
+   * A new anonymous session with random id and anti-CSRF token (24 random bytes each); signing in fills in the user.
+   */
   createSession(): { id: string; session: Session } {
     const id = randomBytes(24).toString('base64url');
     const session = { userId: null, csrfToken: randomBytes(24).toString('base64url') };
@@ -63,10 +69,12 @@ export class Store {
     return { id, session };
   }
 
+  /** The session with this id, or undefined. */
   session(id: string | undefined): Session | undefined {
     return id ? this.sessions.get(id) : undefined;
   }
 
+  /** Ends a session (sign-out); the old cookie is worthless afterwards. */
   endSession(id: string): void {
     this.sessions.delete(id);
   }
@@ -83,6 +91,7 @@ export class Store {
     return recent.length >= LOGIN_LIMIT;
   }
 
+  /** The notes that belong to this user. */
   notesOf(userId: number): Note[] {
     return this.notes.filter((n) => n.ownerId === userId);
   }
