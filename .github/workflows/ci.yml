@@ -29,7 +29,18 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run check
-      - run: npm test
+      # The same tests as npm test, also written as JUnit XML (reports/ is not in the repository)
+      - run: mkdir -p reports && npm run test:ci
+      # JUnit XML only, as its own artifact: the CI results collection of
+      # automation-coverage-quality-intelligence imports it (config/producers.toml there)
+      - name: Keep the JUnit results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: junit-api
+          path: reports/junit-api.xml
+          if-no-files-found: warn
+          retention-days: 30
 
   scan:
     name: ZAP scans (${{ matrix.build }} build)

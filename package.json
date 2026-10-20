@@ -12,6 +12,7 @@
   "scripts": {
     "app": "node app/server.ts --port 4320",
     "test": "node --test tests/*.test.ts",
+    "test:ci": "node --test --test-reporter=spec --test-reporter-destination=stdout --test-reporter=junit --test-reporter-destination=reports/junit-api.xml tests/*.test.ts",
     "scan": "node scripts/scan.ts",
     "scan:full": "node scripts/scan.ts --full",
     "verify": "node scripts/verify.ts",
