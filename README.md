@@ -114,6 +114,8 @@ build running the baseline and the full scan in parallel; then a job that downlo
 writes the summary table. The ZAP reports are kept as artifacts for 14 days. The API security tests are kept as JUnit
 XML (`junit-api`), which [Automation Coverage & Quality Intelligence](https://github.com/niranjankagri/automation-coverage-quality-intelligence) collects.
 
+CI also runs every Thursday at 23:15 UTC without a code change, so a broken dependency or a change outside the repository shows up within a week. Dependabot proposes dependency and GitHub Actions updates once a month (minor and patch updates grouped, major versions as separate pull requests).
+
 `main` is protected by a ruleset: every change goes through a pull request, and the CI jobs above must pass before it is merged.
 
 ## Limits
