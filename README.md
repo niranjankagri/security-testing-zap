@@ -45,6 +45,10 @@ belongs to bob. That is the point of the API tests next to it. The CI run page s
   public login page for a bypass. A false positive; the token check now answers 400 (the request is invalid, not
   forbidden), and the rule stays FAIL for real bypasses.
 
+## Test cases
+
+Every security test starts with its case ID (`[TC-206] rejects a login without the form token ...`), and the ZAP verdict for the hardened build is case TC-213. The 13 cases are written out for a manual run with a browser, curl and ZAP in [docs/manual-test-cases.md](docs/manual-test-cases.md): access-control checks TC-201 to TC-203, security behaviour TC-204 to TC-212, ZAP scan TC-213.
+
 ## How it works
 
 ```

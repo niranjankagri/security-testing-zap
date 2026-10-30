@@ -41,7 +41,12 @@ if (!scans.hardenedBaseline || !scans.vulnerableBaseline) {
 if (requireFull && (!scans.hardenedFull || !scans.vulnerableFull)) problems.push('full-scan reports are missing');
 
 // 1. The hardened build.
-lines.push('### Hardened build: only IGNORE alerts allowed', '', '| Scan | Alerts | Not allowed |', '|---|---:|---|');
+lines.push(
+  '### [TC-213] Hardened build: only IGNORE alerts allowed',
+  '',
+  '| Scan | Alerts | Not allowed |',
+  '|---|---:|---|',
+);
 for (const [scan, alerts] of [
   ['baseline', scans.hardenedBaseline],
   ['full', scans.hardenedFull],
