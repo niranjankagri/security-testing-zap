@@ -23,14 +23,15 @@ async function start(build: Build): Promise<string> {
 }
 
 const CHECKS = [
-  { defect: 'idor-read-other-notes', check: idorFindings },
-  { defect: 'mass-assignment-owner', check: massAssignmentFindings },
-  { defect: 'no-login-rate-limit', check: rateLimitFindings },
+  { id: 'TC-201', defect: 'idor-read-other-notes', check: idorFindings },
+  { id: 'TC-202', defect: 'mass-assignment-owner', check: massAssignmentFindings },
+  { id: 'TC-203', defect: 'no-login-rate-limit', check: rateLimitFindings },
 ] as const;
 
-for (const { defect, check } of CHECKS) {
+for (const { id, defect, check } of CHECKS) {
   describe(check.name, () => {
-    it('finds nothing in the hardened build', async () => {
+    // The test case (docs/manual-test-cases.md) is the hardened build; the vulnerable-build test checks the check.
+    it(`[${id}] finds nothing in the hardened build`, async () => {
       assert.deepEqual(await check(await start('hardened')), []);
     });
 
@@ -47,7 +48,7 @@ for (const { defect, check } of CHECKS) {
 }
 
 describe('hardened build: the security behaviour users rely on', () => {
-  it('lets alice sign in and see only her own notes', async () => {
+  it('[TC-204] lets alice sign in and see only her own notes', async () => {
     const alice = new Client(await start('hardened'));
     assert.equal(await alice.login('alice', DEMO_PASSWORD), 303);
     const { status, body } = await alice.json('/api/notes');
@@ -58,18 +59,18 @@ describe('hardened build: the security behaviour users rely on', () => {
     );
   });
 
-  it('answers the API with 401 before sign-in', async () => {
+  it('[TC-205] answers the API with 401 before sign-in', async () => {
     const anonymous = new Client(await start('hardened'));
     assert.equal((await anonymous.json('/api/notes')).status, 401);
   });
 
-  it('rejects a login without the form token (cross-site request forgery)', async () => {
+  it('[TC-206] rejects a login without the form token (cross-site request forgery)', async () => {
     const client = new Client(await start('hardened'));
     await client.loginForm();
     assert.equal(await client.login('alice', DEMO_PASSWORD, 'forged-token'), 400);
   });
 
-  it('shows no form on the expired-token page (a form there could never carry a valid token)', async () => {
+  it('[TC-207] shows no form on the expired-token page (a form there could never carry a valid token)', async () => {
     const client = new Client(await start('hardened'));
     await client.loginForm();
     const response = await client.request('/login', {
@@ -83,7 +84,7 @@ describe('hardened build: the security behaviour users rely on', () => {
     assert.match(page, /<a href="\/login">/);
   });
 
-  it('issues a new session id at sign-in (session fixation)', async () => {
+  it('[TC-208] issues a new session id at sign-in (session fixation)', async () => {
     const client = new Client(await start('hardened'));
     await client.loginForm();
     const before = client.sessionId;
@@ -91,7 +92,7 @@ describe('hardened build: the security behaviour users rely on', () => {
     assert.notEqual(client.sessionId, before);
   });
 
-  it('gives the same answer for an unknown user and a wrong password', async () => {
+  it('[TC-209] gives the same answer for an unknown user and a wrong password', async () => {
     const base = await start('hardened');
     const pages = [];
     for (const name of ['alice', 'mallory']) {
@@ -107,14 +108,14 @@ describe('hardened build: the security behaviour users rely on', () => {
     assert.deepEqual(pages[0], pages[1]);
   });
 
-  it('accepts only JSON on the update endpoint', async () => {
+  it('[TC-210] accepts only JSON on the update endpoint', async () => {
     const alice = new Client(await start('hardened'));
     await alice.login('alice', DEMO_PASSWORD);
     const response = await alice.request('/api/notes/1', { method: 'PATCH', body: 'title=x' });
     assert.equal(response.status, 415);
   });
 
-  it('refuses ambiguous paths instead of normalising them', async () => {
+  it('[TC-211] refuses ambiguous paths instead of normalising them', async () => {
     const base = await start('hardened');
     for (const path of ['/%2e/login', '//login', '/notes/../login']) {
       // fetch would normalise "/notes/../login" itself, so the raw request goes through node:http.
@@ -123,7 +124,7 @@ describe('hardened build: the security behaviour users rely on', () => {
     }
   });
 
-  it('escapes the search term', async () => {
+  it('[TC-212] escapes the search term', async () => {
     const page = await (await fetch(`${await start('hardened')}/search?q=<script>alert(1)</script>`)).text();
     assert.match(page, /Results for &lt;script&gt;alert\(1\)&lt;\/script&gt;/);
   });
